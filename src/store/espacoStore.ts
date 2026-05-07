@@ -10,6 +10,7 @@ const CONFIRMACOES_MINIMAS = 3
 interface EspacoState {
     espacos: Espaco[]
     avaliacoes: Avaliacao[]
+    setFromParse: (espacos: Espaco[], avaliacoes: Avaliacao[]) => void
     addRegistro: (
         dados: Omit<Espaco, 'id' | 'confirmacoes' | 'status' | 'criadoEm'>,
     ) => 'novo' | 'confirmado' | 'validado'
@@ -27,6 +28,8 @@ export const useEspacoStore = create<EspacoState>()(
         (set, get) => ({
             espacos: mockEspacos,
             avaliacoes: mockAvaliacoes,
+
+            setFromParse: (espacos, avaliacoes) => set({ espacos, avaliacoes }),
 
             addRegistro: (dados) => {
                 const state = get()

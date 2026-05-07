@@ -8,6 +8,7 @@ const USUARIO_MOCK = 'usuario-atual'
 
 interface EventoState {
     eventos: Evento[]
+    setFromParse: (eventos: Evento[]) => void
     addEvento: (dados: Omit<Evento, 'id' | 'vagasRestantes' | 'participantes' | 'criadoEm'>) => string
     participar: (eventoId: string) => 'ok' | 'lotado' | 'ja_inscrito'
     sair: (eventoId: string) => void
@@ -18,6 +19,8 @@ export const useEventoStore = create<EventoState>()(
     persist(
         (set, get) => ({
             eventos: mockEventos,
+
+            setFromParse: (eventos) => set({ eventos }),
 
             addEvento: (dados) => {
                 const id = `ev${Date.now()}`

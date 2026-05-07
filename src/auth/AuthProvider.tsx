@@ -3,6 +3,14 @@ import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
 import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
+import {
+    parseSignIn,
+    parseSignUp,
+    parseSignOut,
+    parseForgotPassword as parseForgotPasswordService,
+    parseCurrentUser,
+    parseCurrentSessionToken,
+} from '@/services/parse/authService'
 import { REDIRECT_URL_KEY } from '@/constants/app.constant'
 import { useNavigate } from 'react-router'
 import type {
@@ -24,13 +32,7 @@ export type IsolatedNavigatorRef = {
 
 const IsolatedNavigator = ({ ref }: { ref: Ref<IsolatedNavigatorRef> }) => {
     const navigate = useNavigate()
-
-    useImperativeHandle(ref, () => {
-        return {
-            navigate,
-        }
-    }, [navigate])
-
+    useImperativeHandle(ref, () => ({ navigate }), [navigate])
     return <></>
 }
 
@@ -38,118 +40,111 @@ function AuthProvider({ children }: AuthProviderProps) {
     const signedIn = useSessionUser((state) => state.session.signedIn)
     const user = useSessionUser((state) => state.user)
     const setUser = useSessionUser((state) => state.setUser)
-    const setSessionSignedIn = useSessionUser(
-        (state) => state.setSessionSignedIn,
-    )
+    const setSessionSignedIn = useSessionUser((state) => state.setSessionSignedIn)
     const { token, setToken } = useToken()
     const [tokenState, setTokenState] = useState(token)
+
+    // Quando não usa mock, restaura sessão Parse na inicialização
+    const [, setInit] = useState(() => {
+        if (!appConfig.enableMock) {
+            const currentUser = parseCurrentUser()
+            const sessionToken = parseCurrentSessionToken()
+            if (currentUser && sessionToken) {
+                setUser(currentUser)
+                setSessionSignedIn(true)
+                setToken(sessionToken)
+            }
+        }
+        return null
+    })
 
     const authenticated = Boolean(tokenState && signedIn)
 
     const navigatorRef = useRef<IsolatedNavigatorRef>(null)
 
     const redirect = () => {
-        const search = window.location.search
-        const params = new URLSearchParams(search)
+        const params = new URLSearchParams(window.location.search)
         const redirectUrl = params.get(REDIRECT_URL_KEY)
-
-        navigatorRef.current?.navigate(
-            redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath,
-        )
+        navigatorRef.current?.navigate(redirectUrl || appConfig.authenticatedEntryPath)
     }
 
     const handleSignIn = (tokens: Token, user?: User) => {
         setToken(tokens.accessToken)
         setTokenState(tokens.accessToken)
         setSessionSignedIn(true)
-
-        if (user) {
-            setUser(user)
-        }
+        if (user) setUser(user)
     }
 
     const handleSignOut = () => {
         setToken('')
+        setTokenState('')
         setUser({})
         setSessionSignedIn(false)
     }
 
     const signIn = async (values: SignInCredential): AuthResult => {
         try {
-            const resp = await apiSignIn(values)
+            const resp = appConfig.enableMock
+                ? await apiSignIn(values)
+                : await parseSignIn(values)
+
             if (resp) {
                 handleSignIn({ accessToken: resp.token }, resp.user)
                 redirect()
-                return {
-                    status: 'success',
-                    message: '',
-                }
+                return { status: 'success', message: '' }
             }
-            return {
-                status: 'failed',
-                message: 'Unable to sign in',
-            }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+            return { status: 'failed', message: 'Não foi possível entrar.' }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (errors: any) {
-            return {
-                status: 'failed',
-                message: errors?.response?.data?.message || errors.toString(),
-            }
+            const msg =
+                errors?.message ||
+                errors?.response?.data?.message ||
+                'E-mail ou senha incorretos.'
+            return { status: 'failed', message: msg }
         }
     }
 
     const signUp = async (values: SignUpCredential): AuthResult => {
         try {
-            const resp = await apiSignUp(values)
+            const resp = appConfig.enableMock
+                ? await apiSignUp(values)
+                : await parseSignUp(values)
+
             if (resp) {
                 handleSignIn({ accessToken: resp.token }, resp.user)
                 redirect()
-                return {
-                    status: 'success',
-                    message: '',
-                }
+                return { status: 'success', message: '' }
             }
-            return {
-                status: 'failed',
-                message: 'Unable to sign up',
-            }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+            return { status: 'failed', message: 'Não foi possível criar a conta.' }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (errors: any) {
-            return {
-                status: 'failed',
-                message: errors?.response?.data?.message || errors.toString(),
-            }
+            const msg =
+                errors?.message ||
+                errors?.response?.data?.message ||
+                'Erro ao criar conta. O e-mail pode já estar em uso.'
+            return { status: 'failed', message: msg }
         }
     }
 
     const signOut = async () => {
         try {
-            await apiSignOut()
+            if (appConfig.enableMock) {
+                await apiSignOut()
+            } else {
+                await parseSignOut()
+            }
         } finally {
             handleSignOut()
             navigatorRef.current?.navigate('/')
         }
     }
-    const oAuthSignIn = (
-        callback: (payload: OauthSignInCallbackPayload) => void,
-    ) => {
-        callback({
-            onSignIn: handleSignIn,
-            redirect,
-        })
+
+    const oAuthSignIn = (callback: (payload: OauthSignInCallbackPayload) => void) => {
+        callback({ onSignIn: handleSignIn, redirect })
     }
 
     return (
-        <AuthContext.Provider
-            value={{
-                authenticated,
-                user,
-                signIn,
-                signUp,
-                signOut,
-                oAuthSignIn,
-            }}
-        >
+        <AuthContext.Provider value={{ authenticated, user, signIn, signUp, signOut, oAuthSignIn }}>
             {children}
             <IsolatedNavigator ref={navigatorRef} />
         </AuthContext.Provider>

@@ -9,6 +9,7 @@ const USUARIO_NOME_MOCK = 'Você'
 interface ForumState {
     posts: PostForum[]
     seguindoEspacos: string[]
+    setFromParse: (posts: PostForum[]) => void
     addPost: (dados: { espacoId: string; conteudo: string; tipo: TipoPost }) => void
     curtir: (postId: string) => void
     seguirEspaco: (espacoId: string) => void
@@ -21,6 +22,8 @@ export const useForumStore = create<ForumState>()(
         (set, get) => ({
             posts: mockPosts,
             seguindoEspacos: [],
+
+            setFromParse: (posts) => set({ posts }),
 
             addPost: ({ espacoId, conteudo, tipo }) => {
                 const novoPost: PostForum = {
