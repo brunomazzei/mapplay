@@ -14,6 +14,7 @@ import { useEspacoStore } from '@/store/espacoStore'
 import { useEventoStore } from '@/store/eventoStore'
 import EvaluationBar from './components/EvaluationBar'
 import AvaliacaoSheet from './components/AvaliacaoSheet'
+import ForumSection from './components/ForumSection'
 import { formatEventDate } from '@/utils/formatDate'
 import type { AvaliacaoConservacao } from '@/types/espaco'
 
@@ -307,6 +308,11 @@ const SpaceDetail = () => {
                         <HiOutlinePlusCircle className="text-lg" />
                         Criar evento neste espaço
                     </button>
+                </Section>
+
+                {/* Fórum da comunidade */}
+                <Section title="Fórum da comunidade">
+                    <ForumSection espacoId={espaco.id} />
                 </Section>
             </div>
 
