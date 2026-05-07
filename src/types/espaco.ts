@@ -36,3 +36,12 @@ export type Espaco = {
     cidade?: string
     criadoEm: string
 }
+
+export type Avaliacao = {
+    id: string
+    espacoId: string
+    nivel: AvaliacaoConservacao
+    fotoUrl?: string
+    userId?: string
+    criadoEm: string
+}
