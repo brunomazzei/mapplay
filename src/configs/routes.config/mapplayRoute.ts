@@ -36,6 +36,20 @@ const mapplayRoute: Routes = [
         authority: [ADMIN, USER],
         meta: baseMeta,
     },
+    {
+        key: 'mapplay.spaceRegister',
+        path: '/espacos/novo',
+        component: lazy(() => import('@/views/mapplay/SpaceRegister')),
+        authority: [ADMIN, USER],
+        meta: baseMeta,
+    },
+    {
+        key: 'mapplay.spaceDetail',
+        path: '/espacos/:id',
+        component: lazy(() => import('@/views/mapplay/SpaceDetail')),
+        authority: [ADMIN, USER],
+        meta: baseMeta,
+    },
 ]
 
 export default mapplayRoute
