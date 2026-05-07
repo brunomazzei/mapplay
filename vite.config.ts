@@ -10,7 +10,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.join(__dirname, 'src'),
+      // Polyfill do módulo Node.js "events" para o Parse SDK funcionar no browser.
+      // O pacote npm "events" é a implementação browser-safe do EventEmitter.
+      'events': path.resolve(__dirname, 'node_modules/events/events.js'),
     },
+  },
+  optimizeDeps: {
+    // Força o Vite a pré-bundlar o Parse SDK incluindo o alias de events
+    include: ['parse'],
   },
   server: {
     proxy: {
