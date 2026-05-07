@@ -1,5 +1,6 @@
 import Alert from '@/components/ui/Alert'
 import SignInForm from './components/SignInForm'
+import OauthSignIn from './components/OauthSignIn'
 import ActionLink from '@/components/shared/ActionLink'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
 
@@ -47,6 +48,17 @@ export const SignInBase = ({
                     </div>
                 }
             />
+            <div className="mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="border-t border-gray-200 dark:border-gray-700 flex-1" />
+                    <span className="text-sm text-gray-400">ou</span>
+                    <div className="border-t border-gray-200 dark:border-gray-700 flex-1" />
+                </div>
+                <OauthSignIn
+                    disableSubmit={disableSubmit}
+                    setMessage={setMessage}
+                />
+            </div>
             <div className="mt-6 text-center">
                 <span>Não tem uma conta? </span>
                 <ActionLink

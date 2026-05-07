@@ -21,6 +21,7 @@ export type SignUpCredential = {
     email: string
     password: string
     bairro: string
+    cidade: string
     esportes: string[]
 }
 
@@ -46,6 +47,7 @@ export type User = {
     email?: string | null
     authority?: string[]
     bairro?: string | null
+    cidade?: string | null
     esportes?: string[]
 }
 

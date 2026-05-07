@@ -53,10 +53,14 @@ const PerfilView = () => {
                     {user.userName ?? 'Usuário'}
                 </h3>
 
-                {user.bairro && (
+                {(user.bairro || user.cidade) && (
                     <div className="flex items-center justify-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-3">
                         <HiOutlineMapPin className="text-base" />
-                        <span>{user.bairro}</span>
+                        <span>
+                            {[user.bairro, user.cidade]
+                                .filter(Boolean)
+                                .join(', ')}
+                        </span>
                     </div>
                 )}
 

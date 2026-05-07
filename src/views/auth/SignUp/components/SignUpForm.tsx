@@ -3,6 +3,7 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
 import PasswordInput from '@/components/shared/PasswordInput'
+import LocalizacaoSearch from '@/components/shared/LocalizacaoSearch'
 import { useAuth } from '@/auth'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,6 +21,7 @@ type SignUpFormSchema = {
     userName: string
     email: string
     bairro: string
+    cidade: string
     esportes: string[]
     password: string
     confirmPassword: string
@@ -39,9 +41,10 @@ const validationSchema: ZodType<SignUpFormSchema> = z
         email: z
             .string({ required_error: 'Informe seu e-mail' })
             .email({ message: 'E-mail inválido' }),
-        bairro: z
-            .string({ required_error: 'Informe seu bairro ou região' })
-            .min(2, { message: 'Informe seu bairro ou região' }),
+        bairro: z.string().optional().default(''),
+        cidade: z
+            .string({ required_error: 'Selecione uma cidade' })
+            .min(2, { message: 'Selecione uma cidade válida' }),
         esportes: z
             .array(z.string())
             .min(1, { message: 'Selecione ao menos um esporte' }),
@@ -70,7 +73,7 @@ const SignUpForm = (props: SignUpFormProps) => {
         setValue,
     } = useForm<SignUpFormSchema>({
         resolver: zodResolver(validationSchema),
-        defaultValues: { esportes: [] },
+        defaultValues: { esportes: [], bairro: '', cidade: '' },
     })
 
     const selectedSports = watch('esportes')
@@ -84,16 +87,15 @@ const SignUpForm = (props: SignUpFormProps) => {
     }
 
     const onSignUp = async (values: SignUpFormSchema) => {
-        const { userName, email, password, bairro, esportes } = values
-
         if (!disableSubmit) {
             setSubmitting(true)
             const result = await signUp({
-                userName,
-                email,
-                password,
-                bairro,
-                esportes,
+                userName: values.userName,
+                email: values.email,
+                password: values.password,
+                bairro: values.bairro,
+                cidade: values.cidade,
+                esportes: values.esportes,
             })
 
             if (result?.status === 'failed') {
@@ -125,6 +127,7 @@ const SignUpForm = (props: SignUpFormProps) => {
                         )}
                     />
                 </FormItem>
+
                 <FormItem
                     label="E-mail"
                     invalid={Boolean(errors.email)}
@@ -143,24 +146,37 @@ const SignUpForm = (props: SignUpFormProps) => {
                         )}
                     />
                 </FormItem>
+
                 <FormItem
-                    label="Bairro / Região"
-                    invalid={Boolean(errors.bairro)}
-                    errorMessage={errors.bairro?.message}
+                    label="Bairro / Cidade"
+                    invalid={Boolean(errors.cidade)}
+                    errorMessage={errors.cidade?.message}
+                    extra={
+                        <span className="text-xs text-gray-400">
+                            via OpenStreetMap
+                        </span>
+                    }
                 >
                     <Controller
-                        name="bairro"
+                        name="cidade"
                         control={control}
-                        render={({ field }) => (
-                            <Input
-                                type="text"
-                                placeholder="Ex: Vila Madalena, SP"
-                                autoComplete="off"
-                                {...field}
+                        render={() => (
+                            <LocalizacaoSearch
+                                invalid={Boolean(errors.cidade)}
+                                placeholder="Ex: Vila Madalena, São Paulo..."
+                                onChange={({ bairro, cidade }) => {
+                                    setValue('bairro', bairro, {
+                                        shouldValidate: true,
+                                    })
+                                    setValue('cidade', cidade, {
+                                        shouldValidate: true,
+                                    })
+                                }}
                             />
                         )}
                     />
                 </FormItem>
+
                 <FormItem
                     label="Esportes que você pratica"
                     invalid={Boolean(errors.esportes)}
@@ -185,6 +201,7 @@ const SignUpForm = (props: SignUpFormProps) => {
                         ))}
                     </div>
                 </FormItem>
+
                 <FormItem
                     label="Senha"
                     invalid={Boolean(errors.password)}
@@ -202,6 +219,7 @@ const SignUpForm = (props: SignUpFormProps) => {
                         )}
                     />
                 </FormItem>
+
                 <FormItem
                     label="Confirmar senha"
                     invalid={Boolean(errors.confirmPassword)}
@@ -219,6 +237,7 @@ const SignUpForm = (props: SignUpFormProps) => {
                         )}
                     />
                 </FormItem>
+
                 <Button
                     block
                     loading={isSubmitting}
