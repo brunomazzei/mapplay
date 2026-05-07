@@ -17,7 +17,7 @@
 | 2 | Mapa Interativo e Cadastro de Espaços | Alta (Core) | ✅ Concluída |
 | 3 | Perfil dos Espaços e Avaliações | Alta | ✅ Concluída |
 | 4 | Eventos e Mobilização Comunitária | Média | ✅ Concluída |
-| 5 | Fórum e Zeladoria Coletiva | Média | ⬜ Pendente |
+| 5 | Fórum e Zeladoria Coletiva | Média | ✅ Concluída |
 | 6 | Dashboard Administrativo | Média | ⬜ Pendente |
 | 7 | Integração com Backend Real | Alta | ⬜ Pendente |
 | 8 | Revisão Final e Entrega | Alta | ⬜ Pendente |

@@ -21,6 +21,9 @@ const mapplayRoute: Routes = [
     // Eventos — /eventos/novo antes de /evento/:id para evitar conflito
     { key: 'mapplay.eventCreate', path: '/eventos/novo', component: lazy(() => import('@/views/mapplay/EventCreate')), authority: [ADMIN, USER], meta: baseMeta },
     { key: 'mapplay.eventDetail', path: '/evento/:id', component: lazy(() => import('@/views/mapplay/EventDetail')), authority: [ADMIN, USER], meta: baseMeta },
+
+    // Admin — acesso restrito verificado internamente no componente
+    { key: 'mapplay.admin', path: '/admin', component: lazy(() => import('@/views/mapplay/AdminDashboard')), authority: [ADMIN, USER], meta: baseMeta },
 ]
 
 export default mapplayRoute
