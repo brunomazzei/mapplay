@@ -125,16 +125,20 @@ O Cloud Code implementa:
 
 ---
 
-## 5. Ativar LiveQuery
+## 5. LiveQuery (opcional — requer plano pago no Back4App)
 
+> ⚠️ O LiveQuery exige cartão de crédito cadastrado e liberação manual pelo Back4App.
+> **O app funciona perfeitamente sem ele** usando polling automático a cada 30 segundos.
+
+Se quiser ativar:
 1. No painel, vá em **Server Settings > Server URL**
 2. Em **LiveQuery**, ative e adicione as classes: `Espaco`, `PostForum`
 3. Copie o **LiveQuery URL** (formato `wss://...`)
+4. No `ParseConfig.ts`, adicione: `Parse.liveQueryServerURL = 'wss://SEU_APP_ID.b4a.io'`
+5. Em `DataLoader.tsx`, mude `POLL_INTERVAL_MS` para `0` e descomente o código de LiveQuery
 
-No `ParseConfig.ts`, adicione:
-```ts
-Parse.liveQueryServerURL = 'wss://SEU_APP_ID.b4a.io'
-```
+**Sem LiveQuery:** o `DataLoader` faz polling a cada 30s — suficiente para uma demo acadêmica.
+Novos espaços cadastrados por outros usuários aparecem no mapa do seu dispositivo em até 30s.
 
 ---
 

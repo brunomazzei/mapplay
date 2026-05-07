@@ -6,7 +6,8 @@
       "Bash(npx cap *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git commit -m 'fix: substitui LiveQuery por polling \\(Back4App exige plano pago\\) *)"
     ]
   }
 }

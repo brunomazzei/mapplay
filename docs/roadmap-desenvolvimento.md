@@ -19,7 +19,7 @@
 | 4 | Eventos e Mobilização Comunitária | Média | ✅ Concluída |
 | 5 | Fórum e Zeladoria Coletiva | Média | ✅ Concluída |
 | 6 | Dashboard Administrativo | Média | ✅ Concluída |
-| 7 | Integração com Backend Real | Alta | ⬜ Pendente |
+| 7 | Integração com Back4App | Alta | ✅ Concluída |
 | 8 | Revisão Final e Entrega | Alta | ⬜ Pendente |
 
 ---

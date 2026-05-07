@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import appConfig from '@/configs/app.config'
 import { useEspacoStore } from '@/store/espacoStore'
 import { useEventoStore } from '@/store/eventoStore'
@@ -6,73 +6,52 @@ import { useForumStore } from '@/store/forumStore'
 import { buscarEspacos, buscarAvaliacoes } from '@/services/parse/espacoService'
 import { buscarEventos } from '@/services/parse/eventoService'
 import { buscarPosts } from '@/services/parse/forumService'
-import { subscribeToEspacos } from '@/services/parse/liveQueryService'
 import type { ReactNode } from 'react'
+
+// Polling a cada 30s — alternativa ao LiveQuery (que requer plano pago no Back4App)
+const POLL_INTERVAL_MS = 30_000
 
 interface DataLoaderProps {
     children: ReactNode
 }
 
 /**
- * Quando enableMock: false, carrega dados reais do Back4App
- * e mantém o mapa sincronizado via LiveQuery.
- * Quando enableMock: true, as stores já têm os dados mock.
+ * Quando enableMock: false, carrega dados reais do Back4App na inicialização
+ * e re-sincroniza o mapa por polling a cada 30 segundos.
+ * Quando enableMock: true, as stores já têm os dados mock e nada é feito.
  */
 const DataLoader = ({ children }: DataLoaderProps) => {
     const setEspacos = useEspacoStore((s) => s.setFromParse)
     const setEventos = useEventoStore((s) => s.setFromParse)
     const setPosts = useForumStore((s) => s.setFromParse)
 
+    const syncAll = useCallback(async () => {
+        try {
+            const [espacos, avaliacoes, eventos, posts] = await Promise.all([
+                buscarEspacos(),
+                buscarAvaliacoes(),
+                buscarEventos(),
+                buscarPosts(),
+            ])
+            setEspacos(espacos, avaliacoes)
+            setEventos(eventos)
+            setPosts(posts)
+        } catch (err) {
+            console.error('[DataLoader] Erro ao sincronizar com Back4App:', err)
+        }
+    }, [setEspacos, setEventos, setPosts])
+
     useEffect(() => {
         if (appConfig.enableMock) return
 
-        let unsubscribeLQ: (() => void) | null = null
+        // Carga inicial
+        syncAll()
 
-        const init = async () => {
-            try {
-                // Carga inicial paralela
-                const [espacos, avaliacoes, eventos, posts] = await Promise.all([
-                    buscarEspacos(),
-                    buscarAvaliacoes(),
-                    buscarEventos(),
-                    buscarPosts(),
-                ])
+        // Polling periódico — mantém o mapa atualizado sem LiveQuery
+        const interval = setInterval(syncAll, POLL_INTERVAL_MS)
 
-                setEspacos(espacos, avaliacoes)
-                setEventos(eventos)
-                setPosts(posts)
-
-                // LiveQuery: atualiza o mapa em tempo real
-                unsubscribeLQ = await subscribeToEspacos(
-                    (novoEspaco) => {
-                        useEspacoStore.setState((s) => ({
-                            espacos: [
-                                ...s.espacos.filter((e) => e.id !== novoEspaco.id),
-                                novoEspaco,
-                            ],
-                        }))
-                    },
-                    (atualizado) => {
-                        useEspacoStore.setState((s) => ({
-                            espacos: s.espacos.map((e) =>
-                                e.id === atualizado.id ? atualizado : e,
-                            ),
-                        }))
-                    },
-                    (deletadoId) => {
-                        useEspacoStore.setState((s) => ({
-                            espacos: s.espacos.filter((e) => e.id !== deletadoId),
-                        }))
-                    },
-                )
-            } catch (err) {
-                console.error('[DataLoader] Erro ao carregar dados do Back4App:', err)
-            }
-        }
-
-        init()
-        return () => { unsubscribeLQ?.() }
-    }, [setEspacos, setEventos, setPosts])
+        return () => clearInterval(interval)
+    }, [syncAll])
 
     return <>{children}</>
 }
