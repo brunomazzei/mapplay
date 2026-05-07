@@ -7,11 +7,14 @@ import {
     HiOutlineCheckBadge,
     HiOutlineClock,
     HiOutlineCalendarDays,
+    HiOutlinePlusCircle,
 } from 'react-icons/hi2'
 import classNames from 'classnames'
 import { useEspacoStore } from '@/store/espacoStore'
+import { useEventoStore } from '@/store/eventoStore'
 import EvaluationBar from './components/EvaluationBar'
 import AvaliacaoSheet from './components/AvaliacaoSheet'
+import { formatEventDate } from '@/utils/formatDate'
 import type { AvaliacaoConservacao } from '@/types/espaco'
 
 const SPORT_CONFIG = {
@@ -70,8 +73,10 @@ const Section = ({
 const SpaceDetail = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const { espacos, avaliacoes, addAvaliacao, confirmarEspaco } =
-        useEspacoStore()
+    const { espacos, avaliacoes, addAvaliacao, confirmarEspaco } = useEspacoStore()
+    const eventosDoEspaco = useEventoStore((s) =>
+        s.eventos.filter((e) => e.espacoId === id),
+    )
     const [avaliacaoOpen, setAvaliacaoOpen] = useState(false)
     const [confirmFeedback, setConfirmFeedback] = useState<string | null>(null)
 
@@ -268,12 +273,40 @@ const SpaceDetail = () => {
                     </Section>
                 )}
 
-                {/* Eventos (placeholder Fase 4) */}
+                {/* Eventos */}
                 <Section title="Eventos">
-                    <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
-                        <HiOutlineCalendarDays className="text-lg" />
-                        <span>Nenhum evento agendado — disponível na Fase 4</span>
-                    </div>
+                    {eventosDoEspaco.length === 0 ? (
+                        <div className="flex items-center gap-2 text-sm text-gray-400 py-1">
+                            <HiOutlineCalendarDays className="text-lg" />
+                            <span>Nenhum evento agendado ainda.</span>
+                        </div>
+                    ) : (
+                        <div className="space-y-2 mb-3">
+                            {eventosDoEspaco.map((ev) => (
+                                <button
+                                    key={ev.id}
+                                    onClick={() => navigate(`/evento/${ev.id}`)}
+                                    className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl text-left hover:bg-gray-100 transition-colors"
+                                >
+                                    <span className="text-xl">
+                                        {ev.tipo === 'mutirao' ? '🤝' : ev.modalidade === 'basquete' ? '🏀' : ev.modalidade === 'futebol' ? '⚽' : '🛹'}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-gray-900 truncate">{ev.nome}</p>
+                                        <p className="text-xs text-gray-500">{formatEventDate(ev.data, ev.hora)} · {ev.vagasRestantes}/{ev.vagas} vagas</p>
+                                    </div>
+                                    <span className="text-xs text-primary shrink-0">Ver →</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    <button
+                        onClick={() => navigate(`/eventos/novo?espacoId=${espaco.id}`)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-primary text-primary text-sm font-medium"
+                    >
+                        <HiOutlinePlusCircle className="text-lg" />
+                        Criar evento neste espaço
+                    </button>
                 </Section>
             </div>
 

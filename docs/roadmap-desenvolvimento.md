@@ -15,7 +15,7 @@
 | 0 | Setup e Identidade Visual | Alta | ✅ Concluída |
 | 1 | Autenticação e Perfil do Usuário | Alta | ✅ Concluída |
 | 2 | Mapa Interativo e Cadastro de Espaços | Alta (Core) | ✅ Concluída |
-| 3 | Perfil dos Espaços e Avaliações | Alta | ⬜ Pendente |
+| 3 | Perfil dos Espaços e Avaliações | Alta | ✅ Concluída |
 | 4 | Eventos e Mobilização Comunitária | Média | ⬜ Pendente |
 | 5 | Fórum e Zeladoria Coletiva | Média | ⬜ Pendente |
 | 6 | Dashboard Administrativo | Média | ⬜ Pendente |
