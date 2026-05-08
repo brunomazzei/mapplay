@@ -1,17 +1,17 @@
 import 'leaflet/dist/leaflet.css'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet'
 import { HiArrowLeft, HiOutlineInformationCircle } from 'react-icons/hi2'
 import Button from '@/components/ui/Button'
 import { FormItem, Form } from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
 import { useGeolocation } from '@/utils/hooks/useGeolocation'
 import { useEspacoStore } from '@/store/espacoStore'
-import { createUserIcon } from '@/views/mapplay/MapView/utils/icons'
+import { createUserIcon, createRegistroIcon } from '@/views/mapplay/MapView/utils/icons'
 import classNames from 'classnames'
 import type { Modalidade } from '@/types/espaco'
 
@@ -69,6 +69,16 @@ const schema = z.object({
 
 type FormSchema = z.infer<typeof schema>
 
+/** Centraliza o mini-mapa na posição do usuário assim que ela chega */
+const MapInitializer = ({ position }: { position: [number, number] }) => {
+    const map = useMap()
+    useEffect(() => {
+        map.setView(position, 16)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    return null
+}
+
 const LocationPicker = ({
     position,
     onChange,
@@ -81,7 +91,7 @@ const LocationPicker = ({
             onChange([e.latlng.lat, e.latlng.lng])
         },
     })
-    return <Marker position={position} icon={createUserIcon()} />
+    return <Marker position={position} icon={createRegistroIcon()} />
 }
 
 const SpaceRegister = () => {
@@ -92,7 +102,7 @@ const SpaceRegister = () => {
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
 
-    const mapCenter = position ?? [-23.5505, -46.6333]
+    const SP_DEFAULT: [number, number] = [-23.5505, -46.6333]
 
     const {
         handleSubmit,
@@ -105,11 +115,21 @@ const SpaceRegister = () => {
         defaultValues: {
             isPublico: false,
             iluminacao: false,
-            lat: mapCenter[0],
-            lng: mapCenter[1],
+            lat: SP_DEFAULT[0],
+            lng: SP_DEFAULT[1],
             atributoValor: '',
         },
     })
+
+    // Quando o GPS chegar, inicializa o pin de registro na posição real
+    useEffect(() => {
+        if (position && markerPos === null) {
+            setMarkerPos(position)
+            setValue('lat', position[0])
+            setValue('lng', position[1])
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [position])
 
     const modalidade = watch('modalidade')
     const atributoConfig = modalidade ? ATRIBUTOS[modalidade] : null
@@ -120,7 +140,7 @@ const SpaceRegister = () => {
         setValue('lng', pos[1])
     }
 
-    const currentMarker = markerPos ?? mapCenter
+    const currentMarker: [number, number] = markerPos ?? position ?? SP_DEFAULT
 
     const onSubmit = async (data: FormSchema) => {
         setSubmitting(true)
@@ -189,15 +209,19 @@ const SpaceRegister = () => {
             {/* Mini-map */}
             <div className="h-44 shrink-0 relative">
                 <MapContainer
-                    center={mapCenter}
+                    center={SP_DEFAULT}
                     zoom={16}
                     style={{ height: '100%', width: '100%' }}
                     zoomControl={false}
                     attributionControl={false}
                 >
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    {position && <MapInitializer position={position} />}
+                    {position && (
+                        <Marker position={position} icon={createUserIcon()} />
+                    )}
                     <LocationPicker
-                        position={currentMarker as [number, number]}
+                        position={currentMarker}
                         onChange={handleLocationChange}
                     />
                 </MapContainer>

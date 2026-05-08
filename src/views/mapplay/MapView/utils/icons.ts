@@ -47,6 +47,7 @@ export const createSpaceIcon = (
     })
 }
 
+/** Bolinha azul pulsante — posição atual do usuário */
 export const createUserIcon = () =>
     L.divIcon({
         html: `<div style="
@@ -59,4 +60,25 @@ export const createUserIcon = () =>
         className: '',
         iconSize: [18, 18],
         iconAnchor: [9, 9],
+    })
+
+/** Pin azul-escuro — local onde o espaço será cadastrado */
+export const createRegistroIcon = () =>
+    L.divIcon({
+        html: `<div style="position:relative;width:36px;height:46px;">
+            <div style="
+                width:36px;height:36px;
+                background:#0369a1;
+                border-radius:50% 50% 50% 0;
+                transform:rotate(-45deg);
+                border:2.5px solid #fff;
+                box-shadow:0 3px 10px rgba(0,0,0,0.35);
+                display:flex;align-items:center;justify-content:center;
+            ">
+                <span style="transform:rotate(45deg);font-size:18px;line-height:1">📌</span>
+            </div>
+        </div>`,
+        className: '',
+        iconSize: [36, 46],
+        iconAnchor: [18, 46],
     })

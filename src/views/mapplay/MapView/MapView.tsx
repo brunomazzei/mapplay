@@ -22,20 +22,18 @@ const AVALIACAO_LABEL: Record<string, string> = {
     somente_revitalizacao: '🚫 Somente com revitalização',
 }
 
-const MapCenterer = ({
-    position,
-    onCentered,
-}: {
-    position: [number, number]
-    onCentered: () => void
-}) => {
+/**
+ * Centraliza o mapa na posição do usuário assim que ela chega.
+ * Usa setView (imediato) em vez de flyTo (animado) para garantir
+ * que funcione mesmo no primeiro mount da rota lazy-loaded.
+ */
+const MapCenterer = ({ position }: { position: [number, number] }) => {
     const map = useMap()
     useEffect(() => {
-        map.flyTo(position, 15, { duration: 1.2 })
-        onCentered()
-    // onCentered é estável (função do useState setter), não precisa de dep
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [map, position])
+        map.setView(position, 15)
+        // Executa apenas uma vez: quando o componente monta com a posição real
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
     return null
 }
 
@@ -46,10 +44,9 @@ const MapView = () => {
     const [activeSport, setActiveSport] = useState<string>('todos')
     const [showFilters, setShowFilters] = useState(false)
     const [filterIluminacao, setFilterIluminacao] = useState<boolean | null>(null)
-    const [centered, setCentered] = useState(false)
 
-    const defaultCenter: [number, number] = [-23.5505, -46.6333]
-    const mapCenter = position ?? defaultCenter
+    // Ponto inicial do mapa antes de ter GPS — São Paulo
+    const SP_DEFAULT: [number, number] = [-23.5505, -46.6333]
 
     const filtered = espacos.filter((e) => {
         if (activeSport !== 'todos' && e.modalidade !== activeSport) return false
@@ -59,7 +56,7 @@ const MapView = () => {
 
     return (
         <div className="relative h-full w-full">
-            {/* Sport filter chips */}
+            {/* Chips de filtro por esporte */}
             <div className="absolute top-3 left-0 right-0 flex gap-2 z-[1000] px-3 overflow-x-auto no-scrollbar">
                 {SPORTS.map((s) => (
                     <button
@@ -90,7 +87,7 @@ const MapView = () => {
                 </button>
             </div>
 
-            {/* Extra filter panel */}
+            {/* Painel de filtros extras */}
             {showFilters && (
                 <div className="absolute top-14 left-3 right-3 bg-white rounded-2xl shadow-xl z-[1000] p-4">
                     <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
@@ -119,9 +116,9 @@ const MapView = () => {
                 </div>
             )}
 
-            {/* Leaflet Map */}
+            {/* Mapa Leaflet */}
             <MapContainer
-                center={defaultCenter}
+                center={SP_DEFAULT}
                 zoom={13}
                 style={{ height: '100%', width: '100%' }}
                 zoomControl={false}
@@ -132,23 +129,21 @@ const MapView = () => {
                     attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
                 />
 
-                {/* Center on user when location arrives */}
-                {position && !centered && (
-                    <MapCenterer position={position} onCentered={() => setCentered(true)} />
-                )}
+                {/* Centraliza imediatamente na posição real do usuário */}
+                {position && <MapCenterer position={position} />}
 
-                {/* User location */}
+                {/* Marcador de posição do usuário (bolinha azul) */}
                 {position && (
                     <Marker position={position} icon={createUserIcon()}>
                         <Popup>
-                            <div className="text-center text-sm">
-                                <strong>Você está aqui</strong>
+                            <div className="text-center text-sm font-semibold">
+                                Você está aqui
                             </div>
                         </Popup>
                     </Marker>
                 )}
 
-                {/* Space markers */}
+                {/* Marcadores dos espaços */}
                 {filtered.map((espaco) => (
                     <Marker
                         key={espaco.id}
@@ -170,20 +165,18 @@ const MapView = () => {
                                         📍 {espaco.bairro}, {espaco.cidade}
                                     </p>
                                 )}
-                                <div className="flex items-center justify-between">
-                                    <span
-                                        className={classNames(
-                                            'text-xs px-2 py-0.5 rounded-full font-medium',
-                                            espaco.status === 'validado'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-orange-100 text-orange-700',
-                                        )}
-                                    >
-                                        {espaco.status === 'validado'
-                                            ? `✓ Validado`
-                                            : `⏳ ${espaco.confirmacoes}/3 confirmações`}
-                                    </span>
-                                </div>
+                                <span
+                                    className={classNames(
+                                        'text-xs px-2 py-0.5 rounded-full font-medium',
+                                        espaco.status === 'validado'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-orange-100 text-orange-700',
+                                    )}
+                                >
+                                    {espaco.status === 'validado'
+                                        ? '✓ Validado'
+                                        : `⏳ ${espaco.confirmacoes}/3 confirmações`}
+                                </span>
                                 {espaco.avaliacao && (
                                     <p className="text-xs text-gray-500 mt-1">
                                         {AVALIACAO_LABEL[espaco.avaliacao]}
@@ -204,7 +197,7 @@ const MapView = () => {
                 ))}
             </MapContainer>
 
-            {/* Loading overlay */}
+            {/* Overlay de carregamento do GPS */}
             {loading && (
                 <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-[1000]">
                     <div className="flex flex-col items-center gap-2">
@@ -222,7 +215,7 @@ const MapView = () => {
                 <HiPlus className="text-2xl" />
             </button>
 
-            {/* Legend */}
+            {/* Legenda */}
             <div className="absolute bottom-6 left-3 z-[1000] bg-white rounded-xl shadow px-3 py-2 flex flex-col gap-1">
                 <div className="flex items-center gap-1.5 text-xs text-gray-600">
                     <span className="w-3 h-3 rounded-full bg-green-600 inline-block" />
