@@ -1,6 +1,8 @@
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/auth'
 import { apiGoogleOauthSignIn } from '@/services/OAuthServices'
+import { parseGoogleSignIn } from '@/services/parse/authService'
+import appConfig from '@/configs/app.config'
 import { USER } from '@/constants/roles.constant'
 
 type OauthSignInProps = {
@@ -23,16 +25,28 @@ const OauthSignIn = ({ setMessage, disableSubmit }: OauthSignInProps) => {
                             email: string | null
                             photoURL: string | null
                         }
-                        onSignIn(
-                            { accessToken: resp.token },
-                            {
-                                userId: firebaseUser.uid,
-                                userName: firebaseUser.displayName ?? '',
-                                email: firebaseUser.email ?? '',
-                                avatar: firebaseUser.photoURL ?? '',
-                                authority: [USER],
-                            },
-                        )
+
+                        if (!appConfig.enableMock) {
+                            // Cria/recupera usuário no Parse vinculado ao Google
+                            const parseResp = await parseGoogleSignIn({
+                                uid: firebaseUser.uid,
+                                email: firebaseUser.email,
+                                displayName: firebaseUser.displayName,
+                                photoURL: firebaseUser.photoURL,
+                            })
+                            onSignIn({ accessToken: parseResp.token }, parseResp.user)
+                        } else {
+                            onSignIn(
+                                { accessToken: resp.token },
+                                {
+                                    userId: firebaseUser.uid,
+                                    userName: firebaseUser.displayName ?? '',
+                                    email: firebaseUser.email ?? '',
+                                    avatar: firebaseUser.photoURL ?? '',
+                                    authority: [USER],
+                                },
+                            )
+                        }
                         redirect()
                     }
                 } catch (error) {

@@ -11,7 +11,9 @@ import { FormItem, Form } from '@/components/ui/Form'
 import Input from '@/components/ui/Input'
 import { useGeolocation } from '@/utils/hooks/useGeolocation'
 import { useEspacoStore } from '@/store/espacoStore'
+import { registrarEspaco } from '@/services/parse/espacoService'
 import { createUserIcon, createRegistroIcon } from '@/views/mapplay/MapView/utils/icons'
+import appConfig from '@/configs/app.config'
 import classNames from 'classnames'
 import type { Modalidade } from '@/types/espaco'
 
@@ -144,7 +146,6 @@ const SpaceRegister = () => {
 
     const onSubmit = async (data: FormSchema) => {
         setSubmitting(true)
-        await new Promise((r) => setTimeout(r, 600))
 
         const atributos =
             modalidade === 'basquete'
@@ -153,23 +154,40 @@ const SpaceRegister = () => {
                   ? { tipoGramado: data.atributoValor as 'natural' | 'sintetico' | 'areia' | 'cimento' }
                   : { tipoObstaculo: data.atributoValor as 'bowl' | 'half_pipe' | 'street' | 'flatground' }
 
-        const resultado = addRegistro({
-            nome: data.nome,
-            modalidade: data.modalidade as Modalidade,
-            lat: data.lat,
-            lng: data.lng,
-            iluminacao: data.iluminacao,
-            atributos,
-        })
-
         const msgs = {
             novo: '📍 Espaço registrado! Aguardando 2 confirmações para ser validado.',
             confirmado: '✅ Você confirmou este espaço! Falta mais 1 confirmação.',
             validado: '🎉 Espaço validado! Ele já aparece no mapa para todos.',
         }
 
-        setSuccessMsg(msgs[resultado])
-        setSubmitting(false)
+        try {
+            if (!appConfig.enableMock) {
+                await registrarEspaco({
+                    nome: data.nome,
+                    modalidade: data.modalidade as Modalidade,
+                    lat: data.lat,
+                    lng: data.lng,
+                    iluminacao: data.iluminacao,
+                    atributos,
+                })
+                setSuccessMsg(msgs.novo)
+            } else {
+                const resultado = addRegistro({
+                    nome: data.nome,
+                    modalidade: data.modalidade as Modalidade,
+                    lat: data.lat,
+                    lng: data.lng,
+                    iluminacao: data.iluminacao,
+                    atributos,
+                })
+                setSuccessMsg(msgs[resultado])
+            }
+        } catch (err) {
+            console.error('[SpaceRegister] Erro ao salvar no Back4App:', err)
+            setSuccessMsg('❌ Erro ao registrar. Verifique sua conexão e tente novamente.')
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     if (successMsg) {

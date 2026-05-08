@@ -12,6 +12,11 @@ import {
 import classNames from 'classnames'
 import { useEspacoStore } from '@/store/espacoStore'
 import { useEventoStore } from '@/store/eventoStore'
+import {
+    confirmarEspaco as confirmarEspacoParse,
+    addAvaliacao as addAvaliacaoParse,
+} from '@/services/parse/espacoService'
+import appConfig from '@/configs/app.config'
 import EvaluationBar from './components/EvaluationBar'
 import AvaliacaoSheet from './components/AvaliacaoSheet'
 import ForumSection from './components/ForumSection'
@@ -108,18 +113,41 @@ const SpaceDetail = () => {
         return cfg.atributoMap[val as keyof typeof cfg.atributoMap] ?? val
     })()
 
-    const handleAvaliacao = (nivel: AvaliacaoConservacao) => {
-        addAvaliacao({ espacoId: espaco.id, nivel })
+    const handleAvaliacao = async (nivel: AvaliacaoConservacao) => {
+        if (!appConfig.enableMock) {
+            try {
+                await addAvaliacaoParse(espaco.id, nivel)
+            } catch (err) {
+                console.error('[SpaceDetail] Erro ao avaliar:', err)
+            }
+        } else {
+            addAvaliacao({ espacoId: espaco.id, nivel })
+        }
     }
 
-    const handleConfirmar = () => {
-        const resultado = confirmarEspaco(espaco.id)
-        const msgs: Record<string, string> = {
-            confirmado: `✅ Confirmação registrada! ${espaco.confirmacoes + 1}/3 confirmações.`,
-            validado: '🎉 Parabéns! Suas confirmações validaram este espaço.',
-            ja_validado: 'Este espaço já foi validado pela comunidade.',
+    const handleConfirmar = async () => {
+        if (!appConfig.enableMock) {
+            try {
+                await confirmarEspacoParse(espaco)
+                const novasConf = espaco.confirmacoes + 1
+                const feedback =
+                    novasConf >= 3
+                        ? '🎉 Parabéns! Suas confirmações validaram este espaço.'
+                        : `✅ Confirmação registrada! ${novasConf}/3 confirmações.`
+                setConfirmFeedback(feedback)
+            } catch (err) {
+                console.error('[SpaceDetail] Erro ao confirmar:', err)
+                setConfirmFeedback('❌ Erro ao confirmar. Tente novamente.')
+            }
+        } else {
+            const resultado = confirmarEspaco(espaco.id)
+            const msgs: Record<string, string> = {
+                confirmado: `✅ Confirmação registrada! ${espaco.confirmacoes + 1}/3 confirmações.`,
+                validado: '🎉 Parabéns! Suas confirmações validaram este espaço.',
+                ja_validado: 'Este espaço já foi validado pela comunidade.',
+            }
+            setConfirmFeedback(msgs[resultado])
         }
-        setConfirmFeedback(msgs[resultado])
         setTimeout(() => setConfirmFeedback(null), 3500)
     }
 

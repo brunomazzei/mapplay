@@ -69,16 +69,32 @@ export const registrarEspaco = async (
     await registro.save()
 }
 
-export const confirmarEspaco = async (espacoId: string) => {
-    const query = new Parse.Query('Espaco')
-    const espaco = await query.get(espacoId)
+/**
+ * Confirma que um espaço existe criando um novo RegistroEspaco.
+ * O Cloud Code afterSave detecta o espaço próximo e incrementa
+ * confirmacoes via masterKey (RN01).
+ */
+export const confirmarEspaco = async (espaco: Espaco) => {
+    const Registro = Parse.Object.extend('RegistroEspaco')
+    const registro = new Registro()
 
-    const novasConf = (espaco.get('confirmacoes') ?? 0) + 1
-    espaco.set('confirmacoes', novasConf)
-    if (novasConf >= 3) espaco.set('status', 'validado')
+    registro.set('nome', espaco.nome)
+    registro.set('modalidade', espaco.modalidade)
+    registro.set('localizacao', new Parse.GeoPoint(espaco.lat, espaco.lng))
+    registro.set('iluminacao', espaco.iluminacao)
+    registro.set('atributos', espaco.atributos ?? {})
+    registro.set('bairro', espaco.bairro ?? '')
+    registro.set('cidade', espaco.cidade ?? '')
+    registro.set('isPublico', true)
 
-    await espaco.save()
-    return toEspaco(espaco)
+    const user = Parse.User.current()
+    if (user) registro.set('autor', user)
+
+    const acl = new Parse.ACL()
+    acl.setPublicReadAccess(true)
+    registro.setACL(acl)
+
+    await registro.save()
 }
 
 // ─── Avaliações ───────────────────────────────────────────────
