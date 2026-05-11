@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import {
     HiArrowLeft,
@@ -12,6 +12,7 @@ import {
 import classNames from 'classnames'
 import { useEspacoStore } from '@/store/espacoStore'
 import { useEventoStore } from '@/store/eventoStore'
+import { useShallow } from 'zustand/react/shallow'
 import {
     confirmarEspaco as confirmarEspacoParse,
     addAvaliacao as addAvaliacaoParse,
@@ -79,9 +80,21 @@ const Section = ({
 const SpaceDetail = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const { espacos, avaliacoes, addAvaliacao, confirmarEspaco } = useEspacoStore()
-    const eventosDoEspaco = useEventoStore((s) =>
-        s.eventos.filter((e) => e.espacoId === id),
+    // useShallow evita nova referência quando o objeto retornado tem os mesmos valores
+    const { espacos, avaliacoes, addAvaliacao, confirmarEspaco } = useEspacoStore(
+        useShallow((s) => ({
+            espacos: s.espacos,
+            avaliacoes: s.avaliacoes,
+            addAvaliacao: s.addAvaliacao,
+            confirmarEspaco: s.confirmarEspaco,
+        })),
+    )
+    // filter() dentro do seletor cria array novo a cada render → loop infinito
+    // Separar: seletor retorna array estável, useMemo deriva o filtro
+    const eventos = useEventoStore((s) => s.eventos)
+    const eventosDoEspaco = useMemo(
+        () => eventos.filter((e) => e.espacoId === id),
+        [eventos, id],
     )
     const [avaliacaoOpen, setAvaliacaoOpen] = useState(false)
     const [confirmFeedback, setConfirmFeedback] = useState<string | null>(null)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -37,8 +37,10 @@ const EventCreate = () => {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const addEvento = useEventoStore((s) => s.addEvento)
-    const espacos = useEspacoStore((s) =>
-        s.espacos.filter((e) => e.status === 'validado'),
+    const todosEspacos = useEspacoStore((s) => s.espacos)
+    const espacos = useMemo(
+        () => todosEspacos.filter((e) => e.status === 'validado'),
+        [todosEspacos],
     )
     const [isSubmitting, setSubmitting] = useState(false)
 
