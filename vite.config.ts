@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path';
 import dynamicImport from 'vite-plugin-dynamic-import'
@@ -20,6 +20,11 @@ export default defineConfig({
     include: ['parse'],
   },
   server: {
+    headers: {
+      // Permite que o popup do Google OAuth (Firebase signInWithPopup) se comunique
+      // com a janela principal sem ser bloqueado pela política COOP do browser.
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
@@ -30,5 +35,16 @@ export default defineConfig({
   },
   build: {
     outDir: 'build'
-  }
+  },
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    setupFiles: ['./src/tests/setup.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/services/parse/**', 'src/store/**', 'src/utils/**'],
+    },
+  },
 })

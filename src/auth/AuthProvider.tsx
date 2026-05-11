@@ -1,4 +1,4 @@
-import { useRef, useImperativeHandle, useState } from 'react'
+import { useRef, useImperativeHandle, useEffect, useState } from 'react'
 import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
@@ -44,8 +44,8 @@ function AuthProvider({ children }: AuthProviderProps) {
     const { token, setToken } = useToken()
     const [tokenState, setTokenState] = useState(token)
 
-    // Quando não usa mock, restaura sessão Parse na inicialização
-    const [, setInit] = useState(() => {
+    // Restaura sessão Parse após o primeiro render (não durante o render)
+    useEffect(() => {
         if (!appConfig.enableMock) {
             const currentUser = parseCurrentUser()
             const sessionToken = parseCurrentSessionToken()
@@ -53,10 +53,11 @@ function AuthProvider({ children }: AuthProviderProps) {
                 setUser(currentUser)
                 setSessionSignedIn(true)
                 setToken(sessionToken)
+                setTokenState(sessionToken)
             }
         }
-        return null
-    })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const authenticated = Boolean(tokenState && signedIn)
 

@@ -17,6 +17,8 @@ import appConfig from '@/configs/app.config'
 import classNames from 'classnames'
 import type { Modalidade } from '@/types/espaco'
 
+const SP_DEFAULT: [number, number] = [-23.5505, -46.6333]
+
 const MODALIDADES = [
     { key: 'basquete', label: 'Basquete', emoji: '🏀' },
     { key: 'futebol', label: 'Futebol', emoji: '⚽' },
@@ -103,8 +105,6 @@ const SpaceRegister = () => {
     const [isSubmitting, setSubmitting] = useState(false)
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
-
-    const SP_DEFAULT: [number, number] = [-23.5505, -46.6333]
 
     const {
         handleSubmit,
